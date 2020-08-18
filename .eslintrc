@@ -1,0 +1,37 @@
+{
+  "env": {
+    "node": true,
+    "es6": true,
+    "es2017": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "tsconfig.json",
+    "tsconfigRootDir": "."
+  },
+  "plugins": ["@typescript-eslint"],
+  "extends": ["airbnb-typescript/base", "prettier", "prettier/@typescript-eslint"],
+  "rules": {
+    "no-console": "off",
+    "comma-dangle": ["error", "only-multiline"],
+    "camelcase": ["error", { "properties": "always" }],
+    "eqeqeq": ["error", "always"],
+    "max-len": ["error", { "code": 120 }],
+    "no-use-before-define": "error",
+    "padding-line-between-statements": [
+      "error",
+      { "blankLine": "always", "prev": "*", "next": "return" },
+      { "blankLine": "always", "prev": ["const", "let", "var"], "next": "*" },
+      { "blankLine": "any", "prev": ["const", "let", "var"], "next": ["const", "let", "var"] }
+    ],
+    "array-bracket-spacing": ["error", "always"],
+    "object-curly-spacing": ["error", "always"],
+    "no-magic-numbers": "error",
+    "func-style": ["error", "expression"],
+    "no-confusing-arrow": "error",
+    "no-constant-condition": "error",
+    "no-multi-spaces": "error",
+    "no-extra-semi": "error",
+    "eol-last": ["error", "always"]
+  }
+}
