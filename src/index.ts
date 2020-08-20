@@ -2,6 +2,12 @@ const express = require('express');
 
 const NodeCache = require('node-cache');
 
+const Joi = require('joi');
+
+const { v4: uuidv4 } = require('uuid');
+
+const passwordComplexity = require('joi-password-complexity');
+
 const app = express();
 const { Request, Response } = express;
 
@@ -15,11 +21,39 @@ type User = {
   isDeleted: boolean;
 };
 
+type ValidationError = {
+  message: string;
+  path: string[];
+  type: string;
+};
+
 const NO_CONTENT_CODE = 204;
+const BAD_REQUEST_CODE = 400;
 const NOT_FOUND_CODE = 404;
 const INTERNAL_ERROR = 500;
 const AUTO_SUGGEST_LIMIT = 3;
 const ZERO = 0;
+const LOGIN_MIN_LENGTH = 3;
+const LOGIN_MAX_LENGTH = 30;
+const MIN_AGE = 4;
+const MAX_AGE = 130;
+
+const complexityOptions = {
+  min: 8,
+  max: 26,
+  lowerCase: 1,
+  upperCase: 0,
+  numeric: 1,
+  symbol: 0,
+  requirementCount: 2,
+};
+
+const schema = Joi.object({
+  login: Joi.string().alphanum().min(LOGIN_MIN_LENGTH).max(LOGIN_MAX_LENGTH).required(),
+  password: passwordComplexity(complexityOptions).required(),
+
+  age: Joi.number().integer().min(MIN_AGE).max(MAX_AGE).required(),
+});
 
 const compareStrings = (searchLogin: string, login: string) => {
   return searchLogin.split('').every((value: string, index: number) => value === login[index]);
@@ -64,7 +98,19 @@ const getAutoSuggest = (req: typeof Request, res: typeof Response) => {
 };
 
 const createUser = (req: typeof Request, res: typeof Response) => {
-  const success = myCache.set(String(req.body.id), req.body);
+  const { error } = schema.validate(req.body);
+
+  if (error) {
+    const errors = error.details.map((err: ValidationError) => err.message);
+
+    return res.status(BAD_REQUEST_CODE).json({ status: 'fail', message: errors });
+  }
+
+  const id = uuidv4();
+
+  const user = { ...req.body, id, isDeleted: false };
+
+  const success = myCache.set(String(id), user);
 
   if (!success) {
     return res.status(INTERNAL_ERROR).json({ status: 'fail', message: 'User cannot be saved' });
@@ -72,7 +118,7 @@ const createUser = (req: typeof Request, res: typeof Response) => {
 
   return res.json({
     status: 'success',
-    user: req.body,
+    user,
   });
 };
 
@@ -83,8 +129,17 @@ const updateUser = (req: typeof Request, res: typeof Response) => {
     return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
   }
 
+  const { error } = schema.validate(req.body);
+
+  if (error) {
+    const errors = error.details.map((err: ValidationError) => err.message);
+
+    return res.status(BAD_REQUEST_CODE).json({ status: 'fail', message: errors });
+  }
+
   myCache.del(req.params.id);
-  const success = myCache.set(String(req.body.id), req.body);
+  const body = { ...req.body, id: req.params.id, isDeleted: false };
+  const success = myCache.set(req.params.id, body);
 
   if (!success) {
     return res.status(INTERNAL_ERROR).json({ status: 'fail', message: 'User cannot be saved' });
@@ -92,7 +147,7 @@ const updateUser = (req: typeof Request, res: typeof Response) => {
 
   return res.json({
     status: 'success',
-    user: req.body,
+    user: body,
   });
 };
 
