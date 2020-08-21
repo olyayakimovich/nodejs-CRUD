@@ -1,21 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-
 import { v4 as uuidv4 } from 'uuid';
 import schema from './schema';
+
 import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, AUTO_SUGGEST_LIMIT } from '../constants';
 import { User, ExtendedRequest } from '../types';
 import { getAutoSuggestUsers } from '../utils';
-// import PasswordComplexity from 'joi-password-complexity';
-
-// const complexityOptions = {
-//   min: 8,
-//   max: 26,
-//   lowerCase: 1,
-//   upperCase: 0,
-//   numeric: 1,
-//   symbol: 0,
-//   requirementCount: 2,
-// };
 
 let users: User[] = [];
 

@@ -8,5 +8,5 @@ export const LOGIN_MIN_LENGTH = 3;
 export const LOGIN_MAX_LENGTH = 30;
 export const MIN_AGE = 4;
 export const MAX_AGE = 130;
-export const MIN_PASSWORD_LENGTH = 8;
+export const MIN_PASSWORD_LENGTH = 6;
 export const MAX_PASSWORD_LENGTH = 26;
