@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import schema from './schema';
+import omit from 'lodash/omit';
 
-import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, AUTO_SUGGEST_LIMIT } from '../constants';
+import schema from './schema';
+import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE } from '../constants';
 import { User, ExtendedRequest } from '../types';
 import { getAutoSuggestUsers } from '../utils';
 
@@ -22,21 +23,28 @@ export const getUserById = (req: ExtendedRequest, res: Response) => {
 
   return res.json({
     status: 'success',
-    user,
+    user: omit(user, 'password'),
   });
 };
 
 export const getAutoSuggest = (req: Request, res: Response) => {
-  const { login } = req.query;
+  const { login, limit } = req.query;
 
   return res.json({
     status: 'success',
     searchString: login,
-    users: getAutoSuggestUsers(users, login as string, AUTO_SUGGEST_LIMIT),
+    users: getAutoSuggestUsers(users, login as string, limit as string),
   });
 };
 
 export const createUser = (req: Request, res: Response) => {
+  const userExists = users.some((value: User) => value.login === req.body.login);
+
+  if (userExists)
+    return res
+      .status(BAD_REQUEST_CODE)
+      .json({ status: 'fail', message: `User with login ${req.body.login} already exists` });
+
   const { error } = schema.validate(req.body);
 
   if (error) {
@@ -53,7 +61,7 @@ export const createUser = (req: Request, res: Response) => {
 
   return res.json({
     status: 'success',
-    user,
+    user: omit(user, 'password'),
   });
 };
 
@@ -72,17 +80,17 @@ export const updateUser = (req: ExtendedRequest, res: Response) => {
     return res.status(BAD_REQUEST_CODE).json({ status: 'fail', message: errors });
   }
 
-  const body = { ...user, ...req.body };
+  const updatedUser = { ...user, ...req.body };
 
   users = users.map((value: User) => {
     if (value.id !== req.params.id) return value;
 
-    return body;
+    return updatedUser;
   });
 
   return res.json({
     status: 'success',
-    user: body,
+    user: omit(updatedUser, 'password'),
   });
 };
 

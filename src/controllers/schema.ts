@@ -7,6 +7,7 @@ import {
   MAX_AGE,
   MIN_PASSWORD_LENGTH,
   MAX_PASSWORD_LENGTH,
+  RASSWORD_ERROR,
 } from '../constants';
 
 export default Joi.object({
@@ -17,8 +18,7 @@ export default Joi.object({
     .max(MAX_PASSWORD_LENGTH)
     .required()
     .messages({
-      'string.pattern.base':
-        'Password must contain at least one letter, at least one number, and be longer than six charaters',
+      'string.pattern.base': RASSWORD_ERROR,
     }),
   age: Joi.number().integer().min(MIN_AGE).max(MAX_AGE).required(),
 });
