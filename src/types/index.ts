@@ -3,7 +3,6 @@ export type User = {
   login: string;
   password: string;
   age: number;
-  isDeleted: boolean;
 } | null;
 
 export type CreateUser = {
@@ -16,5 +15,4 @@ export type GetUser = {
   id: string;
   login: string;
   age: number;
-  isDeleted: boolean;
 } | null;

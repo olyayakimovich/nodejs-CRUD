@@ -41,7 +41,7 @@ class UserService {
   };
 
   createUser = async (body: CreateUser): Promise<GetUser> => {
-    const user = await UserModel.create({ ...body, id: uuidv4(), isDeleted: false });
+    const user = await UserModel.create({ ...body, id: uuidv4() });
 
     return mapUserToClient(user.get());
   };
@@ -52,10 +52,8 @@ class UserService {
     return mapUserToClient(user[1][0].get());
   };
 
-  deleteUser = async (body: CreateUser, id: string): Promise<GetUser> => {
-    const user = await UserModel.update({ ...body, isDeleted: true }, { where: { id }, returning: true });
-
-    return mapUserToClient(user[1][0].get());
+  deleteUser = async (id: string): Promise<void> => {
+    await UserModel.destroy({ where: { id } });
   };
 }
 

@@ -6,7 +6,6 @@ interface UserAttributes {
   login: string;
   password: string;
   age: number;
-  isDeleted: boolean;
 }
 
 class User extends Model<UserAttributes> {}
@@ -20,7 +19,6 @@ User.init(
     },
     password: { type: DataTypes.STRING, allowNull: false },
     age: { type: DataTypes.INTEGER, allowNull: false },
-    isDeleted: { type: DataTypes.BOOLEAN, allowNull: false },
   },
   { sequelize, modelName: 'user' }
 );

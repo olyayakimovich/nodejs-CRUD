@@ -99,7 +99,7 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 
   try {
-    await userService.deleteUser(user, req.params.id);
+    await userService.deleteUser(req.params.id);
 
     return res.status(NO_CONTENT_CODE).json({
       status: 'success',
