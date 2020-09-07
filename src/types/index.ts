@@ -7,9 +7,14 @@ export type User = {
 } | null;
 
 export type CreateUser = {
-  id: string;
   login: string;
   password: string;
   age: number;
-  isDeleted: boolean;
 };
+
+export type GetUser = {
+  id: string;
+  login: string;
+  age: number;
+  isDeleted: boolean;
+} | null;

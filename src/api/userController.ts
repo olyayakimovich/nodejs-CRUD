@@ -1,14 +1,11 @@
 import { Request, Response } from 'express';
-import { v4 as uuidv4 } from 'uuid';
-import omit from 'lodash/omit';
 
 import schema from './schema';
 import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE } from '../constants';
-import { mapSuggestUsers } from '../mappers/userMapper';
-import UserService from '../services/userService';
+import userService from '../services/userService';
 
 export const getUserById = async (req: Request, res: Response) => {
-  const user = await new UserService().findUserById(req.params.id);
+  const user = await userService.getUserById(req.params.id);
 
   if (!user) {
     return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
@@ -16,26 +13,24 @@ export const getUserById = async (req: Request, res: Response) => {
 
   return res.json({
     status: 'success',
-    user: omit(user, 'password'),
+    user,
   });
 };
 
 export const getAutoSuggest = async (req: Request, res: Response) => {
   const { login, limit } = req.query;
 
-  const users = await new UserService().findAll();
+  const users = await userService.suggestUsers(login as string, limit as string);
 
   return res.json({
     status: 'success',
     searchString: login,
-    users: mapSuggestUsers(users, login as string, limit as string),
+    users,
   });
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  const { login, password, age } = req.body;
-
-  const userExists = await new UserService().findUserByLogin(login);
+  const userExists = await userService.findUserByLogin(req.body.login);
 
   if (userExists) {
     return res
@@ -51,20 +46,12 @@ export const createUser = async (req: Request, res: Response) => {
     return res.status(BAD_REQUEST_CODE).json({ status: 'fail', message: errors });
   }
 
-  const id = uuidv4();
-
   try {
-    const user = await new UserService().createUser({
-      id,
-      login,
-      password,
-      age,
-      isDeleted: false,
-    });
+    const user = await userService.createUser(req.body);
 
     return res.json({
       status: 'success',
-      user: omit(user, 'password'),
+      user,
     });
   } catch (err) {
     return res.status(BAD_REQUEST_CODE).json({
@@ -75,9 +62,9 @@ export const createUser = async (req: Request, res: Response) => {
 };
 
 export const updateUser = async (req: Request, res: Response) => {
-  const user = await new UserService().findUserById(req.params.id);
+  const userExists = await userService.findUserById(req.params.id);
 
-  if (!user) {
+  if (!userExists) {
     return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
   }
 
@@ -90,11 +77,11 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 
   try {
-    await new UserService().updateUser({ ...user, ...req.body }, req.params.id);
+    const user = await userService.updateUser(req.body, req.params.id);
 
     return res.json({
       status: 'success',
-      user: omit({ ...user, ...req.body }, 'password'),
+      user,
     });
   } catch (err) {
     return res.status(BAD_REQUEST_CODE).json({
@@ -105,14 +92,14 @@ export const updateUser = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-  const user = await new UserService().findUserById(req.params.id);
+  const user = await userService.findUserById(req.params.id);
 
   if (!user) {
     return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
   }
 
   try {
-    await new UserService().updateUser({ ...user, isDeleted: true }, req.params.id);
+    await userService.deleteUser(user, req.params.id);
 
     return res.status(NO_CONTENT_CODE).json({
       status: 'success',
