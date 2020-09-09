@@ -3,7 +3,7 @@ export type User = {
   login: string;
   password: string;
   age: number;
-} | null;
+};
 
 export type CreateUser = {
   login: string;
@@ -15,4 +15,4 @@ export type GetUser = {
   id: string;
   login: string;
   age: number;
-} | null;
+};

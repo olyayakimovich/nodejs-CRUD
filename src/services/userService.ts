@@ -12,7 +12,7 @@ class UserService {
     return users.map((user) => user.get());
   };
 
-  findUserById = async (id: string): Promise<User> => {
+  findUserById = async (id: string): Promise<User | null> => {
     const user = await UserModel.findOne({ where: { id } });
 
     if (!user) return null;
@@ -20,8 +20,10 @@ class UserService {
     return user.get();
   };
 
-  getUserById = async (id: string): Promise<GetUser> => {
+  getUserById = async (id: string): Promise<GetUser | null> => {
     const user = await this.findUserById(id);
+
+    if (!user) return null;
 
     return mapUserToClient(user);
   };
@@ -32,7 +34,7 @@ class UserService {
     return mapSuggestUsers(users, login, limit);
   };
 
-  findUserByLogin = async (login: string): Promise<User> => {
+  findUserByLogin = async (login: string): Promise<User | null> => {
     const user = await UserModel.findOne({ where: { login } });
 
     if (!user) return null;
