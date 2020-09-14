@@ -1,28 +1,13 @@
-import {
-  Model,
-  DataTypes,
-  BelongsToManyGetAssociationsMixin,
-  BelongsToManyAddAssociationsMixin,
-  BelongsToManyRemoveAssociationMixin,
-} from 'sequelize';
+import { Model, DataTypes, BelongsToManyGetAssociationsMixin, BelongsToManyRemoveAssociationMixin } from 'sequelize';
 import sequelize from '../database/connection';
+import { Group } from '../types';
 // eslint-disable-next-line import/no-cycle
 import UserModel from './User';
 
-type Permission = 'READ' | 'WRITE' | 'DELETE' | 'SHARE' | 'UPLOAD_FILES';
-
-interface GroupAttributes {
-  id: string;
-  name: string;
-  permissions: Array<Permission>;
-}
-
-class GroupModel extends Model<GroupAttributes> {
+class GroupModel extends Model<Group> {
   public getUsers!: BelongsToManyGetAssociationsMixin<UserModel>;
 
-  public addUser!: BelongsToManyAddAssociationsMixin<UserModel, string>;
-
-  public removeUser!: BelongsToManyRemoveAssociationMixin<UserModel, string>;
+  public removeUsers!: BelongsToManyRemoveAssociationMixin<UserModel, string[]>;
 }
 
 GroupModel.init(

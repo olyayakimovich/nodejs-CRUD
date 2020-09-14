@@ -92,12 +92,6 @@ export const updateUser = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-  const user = await userService.findUserById(req.params.id);
-
-  if (!user) {
-    return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
-  }
-
   try {
     await userService.deleteUser(req.params.id);
 
@@ -115,11 +109,13 @@ export const deleteUser = async (req: Request, res: Response) => {
 
 export const addUsersToGroup = async (req: Request, res: Response) => {
   try {
-    const users = await userService.addUsersToGroup(req.body.groupId, req.body.userIds);
+    const { groupId, userIds } = req.body;
 
-    return res.status(NO_CONTENT_CODE).json({
+    await userService.addUsersToGroup(groupId, userIds);
+
+    return res.json({
       status: 'success',
-      user: users,
+      message: 'Users where added to group successfully',
     });
   } catch (err) {
     return res.status(BAD_REQUEST_CODE).json({

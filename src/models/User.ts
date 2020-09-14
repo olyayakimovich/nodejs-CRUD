@@ -6,22 +6,16 @@ import {
   BelongsToManyRemoveAssociationMixin,
 } from 'sequelize';
 import sequelize from '../database/connection';
+import { User } from '../types';
 // eslint-disable-next-line import/no-cycle
 import GroupModel from './Group';
 
-interface UserAttributes {
-  id: string;
-  login: string;
-  password: string;
-  age: number;
-}
-
-class UserModel extends Model<UserAttributes> {
+class UserModel extends Model<User> {
   public getGroups!: BelongsToManyGetAssociationsMixin<GroupModel>;
 
   public addGroup!: BelongsToManyAddAssociationsMixin<GroupModel, string>;
 
-  public removeGroup!: BelongsToManyRemoveAssociationMixin<GroupModel, string>;
+  public removeGroups!: BelongsToManyRemoveAssociationMixin<GroupModel, string[]>;
 }
 
 UserModel.init(

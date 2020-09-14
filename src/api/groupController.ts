@@ -50,16 +50,9 @@ export const createGroup = async (req: Request, res: Response) => {
 
 export const updateGroup = async (req: Request, res: Response) => {
   const groupExists = await groupService.getGroupById(req.params.id);
-  const groupWithTheSameName = await groupService.findGroupByName(req.body.name);
 
   if (!groupExists) {
     return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'Group not found' });
-  }
-
-  if (groupWithTheSameName) {
-    return res
-      .status(BAD_REQUEST_CODE)
-      .json({ status: 'fail', message: `Group with name ${req.body.name} already exists` });
   }
 
   try {
@@ -78,12 +71,6 @@ export const updateGroup = async (req: Request, res: Response) => {
 };
 
 export const deleteGroup = async (req: Request, res: Response) => {
-  const group = await groupService.getGroupById(req.params.id);
-
-  if (!group) {
-    return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
-  }
-
   try {
     await groupService.deleteGroup(req.params.id);
 

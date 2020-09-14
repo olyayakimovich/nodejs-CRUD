@@ -46,9 +46,7 @@ class GroupService {
     if (users.length) {
       const userIds = users.map((user) => user.get().id);
 
-      userIds.forEach(async (userId) => {
-        await group.removeUser(userId);
-      });
+      await group.removeUsers(userIds);
     }
     await GroupModel.destroy({ where: { id } });
   };

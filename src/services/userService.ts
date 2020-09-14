@@ -66,12 +66,12 @@ class UserService {
 
     if (!user) return;
 
-    const group = await user.getGroups();
+    const groups = await user.getGroups();
 
-    if (group.length) {
-      const groupId = group[0].get().id;
+    if (groups.length) {
+      const groupIds = groups.map((group) => group.get().id);
 
-      await user.removeGroup(groupId);
+      await user.removeGroups(groupIds);
     }
 
     await UserModel.destroy({ where: { id } });

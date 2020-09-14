@@ -1,9 +1,9 @@
-export type User = {
+export interface User {
   id: string;
   login: string;
   password: string;
   age: number;
-};
+}
 
 export type CreateUser = {
   login: string;
@@ -19,11 +19,11 @@ export type GetUser = {
 
 type Permission = 'READ' | 'WRITE' | 'DELETE' | 'SHARE' | 'UPLOAD_FILES';
 
-export type Group = {
+export interface Group {
   id: string;
   name: string;
   permissions: Array<Permission>;
-};
+}
 
 export type CreateGroup = {
   name: string;
