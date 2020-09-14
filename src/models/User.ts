@@ -1,5 +1,13 @@
-import { Model, DataTypes } from 'sequelize';
+import {
+  Model,
+  DataTypes,
+  BelongsToManyGetAssociationsMixin,
+  BelongsToManyAddAssociationsMixin,
+  BelongsToManyRemoveAssociationMixin,
+} from 'sequelize';
 import sequelize from '../database/connection';
+// eslint-disable-next-line import/no-cycle
+import GroupModel from './Group';
 
 interface UserAttributes {
   id: string;
@@ -8,8 +16,15 @@ interface UserAttributes {
   age: number;
 }
 
-class User extends Model<UserAttributes> {}
-User.init(
+class UserModel extends Model<UserAttributes> {
+  public getGroups!: BelongsToManyGetAssociationsMixin<GroupModel>;
+
+  public addGroup!: BelongsToManyAddAssociationsMixin<GroupModel, string>;
+
+  public removeGroup!: BelongsToManyRemoveAssociationMixin<GroupModel, string>;
+}
+
+UserModel.init(
   {
     id: { type: DataTypes.STRING, primaryKey: true, allowNull: false },
     login: {
@@ -23,4 +38,4 @@ User.init(
   { sequelize, modelName: 'user' }
 );
 
-export default User;
+export default UserModel;

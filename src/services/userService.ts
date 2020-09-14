@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { User, CreateUser, GetUser } from '../types';
-import UserModel from '../models/User';
+import { UserModel } from '../models';
 import { mapUserToClient, mapSuggestUsers } from '../mappers/userMapper';
 
 class UserService {
@@ -35,7 +35,9 @@ class UserService {
   };
 
   findUserByLogin = async (login: string): Promise<User | null> => {
-    const user = await UserModel.findOne({ where: { login } });
+    const user = await UserModel.findOne({
+      where: { login },
+    });
 
     if (!user) return null;
 
@@ -43,7 +45,8 @@ class UserService {
   };
 
   createUser = async (body: CreateUser): Promise<GetUser> => {
-    const user = await UserModel.create({ ...body, id: uuidv4() });
+    const id = uuidv4();
+    const user = await UserModel.create({ ...body, id });
 
     return mapUserToClient(user.get());
   };
@@ -55,7 +58,29 @@ class UserService {
   };
 
   deleteUser = async (id: string): Promise<void> => {
+    const user = await UserModel.findOne({ where: { id } });
+
+    if (!user) return;
+
+    const group = await user.getGroups();
+
+    if (group.length) {
+      const groupId = group[0].get().id;
+
+      await user.removeGroup(groupId);
+    }
+
     await UserModel.destroy({ where: { id } });
+  };
+
+  addUsersToGroup = async (groupId: string, userIds: string[]): Promise<void> => {
+    const users = await UserModel.findAll({ where: { id: userIds } });
+
+    if (!users.length) return;
+
+    users.forEach(async (user) => {
+      await user.addGroup([groupId]);
+    });
   };
 }
 

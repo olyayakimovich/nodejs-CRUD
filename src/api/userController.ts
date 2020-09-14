@@ -112,3 +112,19 @@ export const deleteUser = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const addUsersToGroup = async (req: Request, res: Response) => {
+  try {
+    const users = await userService.addUsersToGroup(req.body.groupId, req.body.userIds);
+
+    return res.status(NO_CONTENT_CODE).json({
+      status: 'success',
+      user: users,
+    });
+  } catch (err) {
+    return res.status(BAD_REQUEST_CODE).json({
+      status: 'fail',
+      message: err,
+    });
+  }
+};

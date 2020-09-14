@@ -16,3 +16,16 @@ export type GetUser = {
   login: string;
   age: number;
 };
+
+type Permission = 'READ' | 'WRITE' | 'DELETE' | 'SHARE' | 'UPLOAD_FILES';
+
+export type Group = {
+  id: string;
+  name: string;
+  permissions: Array<Permission>;
+};
+
+export type CreateGroup = {
+  name: string;
+  permissions: Array<Permission>;
+};
