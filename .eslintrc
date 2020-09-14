@@ -25,7 +25,6 @@
       { "blankLine": "any", "prev": ["const", "let", "var"], "next": ["const", "let", "var"] }
     ],
     "object-curly-spacing": ["error", "always"],
-    "no-magic-numbers": "error",
     "func-style": ["error", "expression"],
     "no-confusing-arrow": "error",
     "no-constant-condition": "error",
