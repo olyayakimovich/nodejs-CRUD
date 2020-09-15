@@ -19,8 +19,6 @@ class GroupService {
   findAll = async (): Promise<Group[]> => {
     const groups = await GroupModel.findAll();
 
-    console.log(groups, 'groups');
-
     return groups.map((group) => group.get());
   };
 

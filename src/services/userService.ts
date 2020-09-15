@@ -49,8 +49,7 @@ class UserService {
   };
 
   createUser = async (body: CreateUser): Promise<GetUser> => {
-    const id = uuidv4();
-    const user = await UserModel.create({ ...body, id });
+    const user = await UserModel.create({ ...body, id: uuidv4() });
 
     return mapUserToClient(user.get());
   };
