@@ -1,23 +1,25 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 import schema from './schema';
 import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE } from '../constants';
 import userService from '../services/userService';
+import HttpException from '../utils/httpExeption';
+import catchAsync from '../utils/catchAsync';
 
-export const getUserById = async (req: Request, res: Response) => {
+export const getUserById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const user = await userService.getUserById(req.params.id);
 
   if (!user) {
-    return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
+    return next(new HttpException(NOT_FOUND_CODE, 'User not found', 'getUserById'));
   }
 
   return res.json({
     status: 'success',
     user,
   });
-};
+});
 
-export const getAutoSuggest = async (req: Request, res: Response) => {
+export const getAutoSuggest = catchAsync(async (req: Request, res: Response) => {
   const { login, limit } = req.query;
 
   const users = await userService.suggestUsers(login as string, limit as string);
@@ -27,15 +29,17 @@ export const getAutoSuggest = async (req: Request, res: Response) => {
     searchString: login,
     users,
   });
-};
+});
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const userExists = await userService.findUserByLogin(req.body.login);
 
+  const args = Object.entries(req.body).map(([key, value]) => `${key}: ${value}`);
+
   if (userExists) {
-    return res
-      .status(BAD_REQUEST_CODE)
-      .json({ status: 'fail', message: `User with login ${req.body.login} already exists` });
+    return next(
+      new HttpException(BAD_REQUEST_CODE, `User with login ${req.body.login} already exists`, 'createUser', args)
+    );
   }
 
   const { error } = schema.validate(req.body);
@@ -43,29 +47,24 @@ export const createUser = async (req: Request, res: Response) => {
   if (error) {
     const errors = error.details.map((err) => err.message);
 
-    return res.status(BAD_REQUEST_CODE).json({ status: 'fail', message: errors });
+    return next(new HttpException(BAD_REQUEST_CODE, `${errors}`, 'createUser', args));
   }
 
-  try {
-    const user = await userService.createUser(req.body);
+  const user = await userService.createUser(req.body);
 
-    return res.json({
-      status: 'success',
-      user,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: 'fail',
-      message: err,
-    });
-  }
-};
+  return res.json({
+    status: 'success',
+    user,
+  });
+});
 
-export const updateUser = async (req: Request, res: Response) => {
+export const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const userExists = await userService.findUserById(req.params.id);
 
+  const args = Object.entries(req.body).map(([key, value]) => `${key}: ${value}`);
+
   if (!userExists) {
-    return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
+    return next(new HttpException(NOT_FOUND_CODE, 'User not found', 'updateUser', args));
   }
 
   const { error } = schema.validate(req.body);
@@ -73,42 +72,28 @@ export const updateUser = async (req: Request, res: Response) => {
   if (error) {
     const errors = error.details.map((err) => err.message);
 
-    return res.status(BAD_REQUEST_CODE).json({ status: 'fail', message: errors });
+    return next(new HttpException(BAD_REQUEST_CODE, `${errors}`, 'updateUser', args));
   }
 
-  try {
-    const user = await userService.updateUser(req.body, req.params.id);
+  const user = await userService.updateUser(req.body, req.params.id);
 
-    return res.json({
-      status: 'success',
-      user,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: 'fail',
-      message: err,
-    });
-  }
-};
+  return res.json({
+    status: 'success',
+    user,
+  });
+});
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const user = await userService.findUserById(req.params.id);
 
   if (!user) {
-    return res.status(NOT_FOUND_CODE).json({ status: 'fail', message: 'User not found' });
+    return next(new HttpException(NOT_FOUND_CODE, 'User not found', 'deleteUser'));
   }
 
-  try {
-    await userService.deleteUser(req.params.id);
+  await userService.deleteUser(req.params.id);
 
-    return res.status(NO_CONTENT_CODE).json({
-      status: 'success',
-      user: null,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: 'fail',
-      message: err,
-    });
-  }
-};
+  return res.status(NO_CONTENT_CODE).json({
+    status: 'success',
+    user: null,
+  });
+});

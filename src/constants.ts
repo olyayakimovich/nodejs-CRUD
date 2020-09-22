@@ -1,6 +1,7 @@
 export const NO_CONTENT_CODE = 204;
 export const BAD_REQUEST_CODE = 400;
 export const NOT_FOUND_CODE = 404;
+export const SERVER_ERROR = 500;
 
 export const START_INDEX = 0;
 export const LOGIN_MIN_LENGTH = 3;
