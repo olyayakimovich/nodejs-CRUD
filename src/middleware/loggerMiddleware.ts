@@ -2,14 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 
 const loggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  const { method, url, body, query } = req;
+  const { method, url, body } = req;
 
   logger.log({
     level: 'info',
-    message: `Sending request to ${url}`,
-    method,
+    message: `Sending ${method} request to ${url}`,
     body,
-    query,
   });
   next();
 };

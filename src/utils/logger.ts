@@ -1,10 +1,15 @@
 import { createLogger, format, transports } from 'winston';
 
+const { combine, colorize, json, timestamp } = format;
+
 const logger = createLogger({
   level: 'info',
-  format: format.combine(format.json(), format.colorize()),
-  defaultMeta: { service: 'user-service' },
-  transports: [new transports.Console()],
+  format: combine(json(), timestamp()),
+  transports: [
+    new transports.Console({
+      format: combine(json(), colorize()),
+    }),
+  ],
 });
 
 export default logger;

@@ -5,14 +5,14 @@ class HttpException extends Error {
 
   methodName?: string;
 
-  args?: string[];
+  body?: any;
 
-  constructor(status: number, message: string, methodName?: string, args?: string[]) {
+  constructor(status: number, message: string, methodName?: string, body?: any) {
     super(message);
     this.status = status;
     this.message = message;
     this.methodName = methodName;
-    this.args = args;
+    this.body = body;
   }
 }
 

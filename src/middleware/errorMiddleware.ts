@@ -5,14 +5,14 @@ import logger from '../utils/logger';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const errorMiddleware = (error: HttpException, request: Request, response: Response, next: NextFunction) => {
-  const { status, message, methodName, args } = error;
+  const { status, message, methodName, body } = error;
 
   logger.log({
     level: 'error',
     message,
     status,
     methodName,
-    args,
+    body,
   });
 
   const errorStatus = status || SERVER_ERROR;

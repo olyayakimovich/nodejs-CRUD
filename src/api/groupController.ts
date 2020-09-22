@@ -1,119 +1,94 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 import { groupSchema } from './schema';
-import { BAD_REQUEST_CODE, NOT_FOUND_CODE, NO_CONTENT_CODE, SUCCESS, FAIL } from '../constants';
+import { BAD_REQUEST_CODE, NOT_FOUND_CODE, NO_CONTENT_CODE, SUCCESS } from '../constants';
 import groupService from '../services/groupService';
+import catchAsync from '../utils/catchAsync';
+import HttpException from '../utils/httpExeption';
 
-export const getGroupById = async (req: Request, res: Response) => {
-  try {
-    const group = await groupService.getGroupById(req.params.id);
+export const getGroupById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { method, params, url } = req;
+  const group = await groupService.getGroupById(params.id);
 
-    if (!group) {
-      return res.status(NOT_FOUND_CODE).json({ status: FAIL, message: 'Group not found' });
-    }
-
-    return res.json({
-      status: SUCCESS,
-      group,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+  if (!group) {
+    return next(new HttpException(NOT_FOUND_CODE, 'Group not found', `getGroupById: ${method} request to ${url}`));
   }
-};
 
-export const getAllGroups = async (req: Request, res: Response) => {
-  try {
-    const groups = await groupService.findAll();
+  return res.json({
+    status: SUCCESS,
+    group,
+  });
+});
 
-    return res.json({
-      status: SUCCESS,
-      groups,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+export const getAllGroups = catchAsync(async (req: Request, res: Response) => {
+  const groups = await groupService.findAll();
+
+  return res.json({
+    status: SUCCESS,
+    groups,
+  });
+});
+
+export const createGroup = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { body, method, url } = req;
+  const groupExists = await groupService.findGroupByName(body.name);
+
+  if (groupExists) {
+    return next(
+      new HttpException(
+        BAD_REQUEST_CODE,
+        `Group with name ${body.name} already exists`,
+        `createGroup: ${method} request to ${url}`,
+        body
+      )
+    );
   }
-};
 
-export const createGroup = async (req: Request, res: Response) => {
-  try {
-    const groupExists = await groupService.findGroupByName(req.body.name);
+  const { error } = groupSchema.validate(body);
 
-    if (groupExists) {
-      return res
-        .status(BAD_REQUEST_CODE)
-        .json({ status: FAIL, message: `Group with name ${req.body.name} already exists` });
-    }
+  if (error) {
+    const errors = error.details.map((err) => err.message);
 
-    const { error } = groupSchema.validate(req.body);
-
-    if (error) {
-      const errors = error.details.map((err) => err.message);
-
-      return res.status(BAD_REQUEST_CODE).json({ status: FAIL, message: errors });
-    }
-
-    const group = await groupService.createGroup(req.body);
-
-    return res.json({
-      status: SUCCESS,
-      group,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+    return next(new HttpException(BAD_REQUEST_CODE, `${errors}`, `createGroup: ${method} request to ${url}`, body));
   }
-};
 
-export const updateGroup = async (req: Request, res: Response) => {
-  try {
-    const groupExists = await groupService.getGroupById(req.params.id);
+  const group = await groupService.createGroup(body);
 
-    if (!groupExists) {
-      return res.status(NOT_FOUND_CODE).json({ status: FAIL, message: 'Group not found' });
-    }
+  return res.json({
+    status: SUCCESS,
+    group,
+  });
+});
 
-    const { error } = groupSchema.validate(req.body);
+export const updateGroup = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { body, method, url, params } = req;
+  const groupExists = await groupService.getGroupById(params.id);
 
-    if (error) {
-      const errors = error.details.map((err) => err.message);
-
-      return res.status(BAD_REQUEST_CODE).json({ status: FAIL, message: errors });
-    }
-
-    const group = await groupService.updateGroup(req.body, req.params.id);
-
-    return res.json({
-      status: SUCCESS,
-      group,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+  if (!groupExists) {
+    return next(new HttpException(NOT_FOUND_CODE, 'Group not found', `updateGroup: ${method} request to ${url}`, body));
   }
-};
 
-export const deleteGroup = async (req: Request, res: Response) => {
-  try {
-    await groupService.deleteGroup(req.params.id);
+  const { error } = groupSchema.validate(body);
 
-    return res.status(NO_CONTENT_CODE).json({
-      status: SUCCESS,
-      group: null,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+  if (error) {
+    const errors = error.details.map((err) => err.message);
+
+    return next(new HttpException(BAD_REQUEST_CODE, `${errors}`, `updateGroup: ${method} request to ${url}`, body));
   }
-};
+
+  const group = await groupService.updateGroup(body, params.id);
+
+  return res.json({
+    status: SUCCESS,
+    group,
+  });
+});
+
+export const deleteGroup = catchAsync(async (req: Request, res: Response) => {
+  await groupService.deleteGroup(req.params.id);
+
+  return res.status(NO_CONTENT_CODE).json({
+    status: SUCCESS,
+    group: null,
+  });
+});
