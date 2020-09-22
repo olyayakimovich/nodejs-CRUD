@@ -14,7 +14,8 @@
     "paths": {
       "src/*": ["src/*"]
     },
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "strictPropertyInitialization": false
   },
   "typeRoots": ["node_modules/@types"],
   "include": ["src/**/*"],
