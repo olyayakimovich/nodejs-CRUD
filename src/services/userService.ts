@@ -1,9 +1,13 @@
+import { Transaction } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import { User, CreateUser, GetUser } from '../types';
-import UserModel from '../models/User';
+import { UserModel } from '../models';
 import { mapUserToClient, mapSuggestUsers } from '../mappers/userMapper';
+import sequelize from '../database/connection';
 
 class UserService {
+  transaction: Transaction;
+
   findAll = async (): Promise<User[]> => {
     const users = await UserModel.findAll();
 
@@ -35,7 +39,9 @@ class UserService {
   };
 
   findUserByLogin = async (login: string): Promise<User | null> => {
-    const user = await UserModel.findOne({ where: { login } });
+    const user = await UserModel.findOne({
+      where: { login },
+    });
 
     if (!user) return null;
 
@@ -55,7 +61,41 @@ class UserService {
   };
 
   deleteUser = async (id: string): Promise<void> => {
+    const user = await UserModel.findOne({ where: { id } });
+
+    if (!user) return;
+
+    const groups = await user.getGroups();
+
+    if (groups.length) {
+      const groupIds = groups.map((group) => group.get().id);
+
+      await user.removeGroups(groupIds);
+    }
+
     await UserModel.destroy({ where: { id } });
+  };
+
+  addUsersToGroup = async (groupId: string, userIds: string[]): Promise<void> => {
+    try {
+      this.transaction = await sequelize.transaction();
+
+      const users = await UserModel.findAll({ where: { id: userIds }, transaction: this.transaction });
+
+      if (!users.length) return;
+
+      const promises = [];
+
+      for (let i = 0; i < users.length; i += 1) {
+        promises.push(users[i].addGroup([groupId], { transaction: this.transaction }));
+      }
+
+      await Promise.all(promises);
+
+      await this.transaction.commit();
+    } catch (err) {
+      if (this.transaction) await this.transaction.rollback();
+    }
   };
 }
 

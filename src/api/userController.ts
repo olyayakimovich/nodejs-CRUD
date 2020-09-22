@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 
-import schema from './schema';
-import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE } from '../constants';
+import { userSchema } from './schema';
+import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, SUCCESS, FAIL } from '../constants';
 import userService from '../services/userService';
 import HttpException from '../utils/httpExeption';
 import catchAsync from '../utils/catchAsync';
@@ -25,7 +25,7 @@ export const getAutoSuggest = catchAsync(async (req: Request, res: Response) => 
   const users = await userService.suggestUsers(login as string, limit as string);
 
   return res.json({
-    status: 'success',
+    status: SUCCESS,
     searchString: login,
     users,
   });
@@ -42,7 +42,7 @@ export const createUser = catchAsync(async (req: Request, res: Response, next: N
     );
   }
 
-  const { error } = schema.validate(req.body);
+  const { error } = userSchema.validate(req.body);
 
   if (error) {
     const errors = error.details.map((err) => err.message);
@@ -53,7 +53,7 @@ export const createUser = catchAsync(async (req: Request, res: Response, next: N
   const user = await userService.createUser(req.body);
 
   return res.json({
-    status: 'success',
+    status: SUCCESS,
     user,
   });
 });
@@ -67,7 +67,7 @@ export const updateUser = catchAsync(async (req: Request, res: Response, next: N
     return next(new HttpException(NOT_FOUND_CODE, 'User not found', 'updateUser', args));
   }
 
-  const { error } = schema.validate(req.body);
+  const { error } = userSchema.validate(req.body);
 
   if (error) {
     const errors = error.details.map((err) => err.message);
@@ -78,22 +78,27 @@ export const updateUser = catchAsync(async (req: Request, res: Response, next: N
   const user = await userService.updateUser(req.body, req.params.id);
 
   return res.json({
-    status: 'success',
+    status: SUCCESS,
     user,
   });
 });
 
-export const deleteUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  const user = await userService.findUserById(req.params.id);
-
-  if (!user) {
-    return next(new HttpException(NOT_FOUND_CODE, 'User not found', 'deleteUser'));
-  }
-
+export const deleteUser = catchAsync(async (req: Request, res: Response) => {
   await userService.deleteUser(req.params.id);
 
   return res.status(NO_CONTENT_CODE).json({
-    status: 'success',
+    status: SUCCESS,
     user: null,
+  });
+});
+
+export const addUsersToGroup = catchAsync(async (req: Request, res: Response) => {
+  const { groupId, userIds } = req.body;
+
+  await userService.addUsersToGroup(groupId, userIds);
+
+  return res.json({
+    status: SUCCESS,
+    message: 'Users where added to group successfully',
   });
 });
