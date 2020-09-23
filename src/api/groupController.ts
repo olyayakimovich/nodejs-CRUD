@@ -3,8 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { groupSchema } from './schema';
 import { BAD_REQUEST_CODE, NOT_FOUND_CODE, NO_CONTENT_CODE, SUCCESS } from '../constants';
 import groupService from '../services/groupService';
-import catchAsync from '../utils/catchAsync';
-import HttpException from '../utils/httpExeption';
+import { catchAsync, HttpException } from '../utils';
 
 export const getGroupById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { method, params, url } = req;

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import logger from '../utils/logger';
+import { logger } from '../utils';
 
 const loggerMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const { method, url, body } = req;

@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import HttpException from '../utils/httpExeption';
+import { HttpException, logger } from '../utils';
 import { SERVER_ERROR } from '../constants';
-import logger from '../utils/logger';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const errorMiddleware = (error: HttpException, request: Request, response: Response, next: NextFunction) => {

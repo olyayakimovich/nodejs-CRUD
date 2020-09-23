@@ -10,7 +10,7 @@
     "lint": "eslint --fix --format=pretty --ext .ts src/",
     "check": "run-s prettier lint",
     "build": "run-s clean check compile",
-    "start": "nodemon src/server.ts",
+    "start": "nodemon src/app.ts",
     "create-users": "nodemon src/scripts/createUsers.ts"
   },
   "author": "Olga Yakimovich",

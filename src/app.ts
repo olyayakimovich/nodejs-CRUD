@@ -1,15 +1,18 @@
 import express, { Request, Response, NextFunction } from 'express';
 
-import errorMiddleware from './middleware/errorMiddleware';
-import loggerMiddleware from './middleware/loggerMiddleware';
-import HttpException from './utils/httpExeption';
+import { errorMiddleware, loggerMiddleware } from './middleware';
+import { HttpException, logger } from './utils';
 import { NOT_FOUND_CODE } from './constants';
 
 import { createUser, getUserById, getAutoSuggest, updateUser, deleteUser, addUsersToGroup } from './api/userController';
 import { getAllGroups, createGroup, getGroupById, updateGroup, deleteGroup } from './api/groupController';
 
-// db connection
 import './database/connection';
+
+process.on('uncaughtException', (err) => {
+  logger.log({ level: 'error', message: err.name });
+  process.exit(1);
+});
 
 const app = express();
 
@@ -32,4 +35,15 @@ app.all('*', (req: Request, res: Response, next: NextFunction) => {
 
 app.use(errorMiddleware);
 
-export default app;
+const PORT = 3000;
+
+const server = app.listen(PORT, () => {
+  console.log(`App is running on port ${PORT}`);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.log({ level: 'error', message: `Unhandled Rejection at: ${promise}, reason: ${reason}` });
+  server.close(() => {
+    process.exit(1);
+  });
+});

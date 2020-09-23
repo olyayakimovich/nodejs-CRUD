@@ -3,8 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { userSchema } from './schema';
 import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, SUCCESS } from '../constants';
 import userService from '../services/userService';
-import HttpException from '../utils/httpExeption';
-import catchAsync from '../utils/catchAsync';
+import { HttpException, catchAsync } from '../utils';
 
 export const getUserById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { params, url, method } = req;
