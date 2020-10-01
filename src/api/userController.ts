@@ -1,140 +1,107 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 import { userSchema } from './schema';
-import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, SUCCESS, FAIL } from '../constants';
+import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, SUCCESS } from '../constants';
 import userService from '../services/userService';
+import { HttpException, catchAsync } from '../utils';
 
-export const getUserById = async (req: Request, res: Response) => {
-  try {
-    const user = await userService.getUserById(req.params.id);
+export const getUserById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { params, url, method } = req;
+  const user = await userService.getUserById(params.id);
 
-    if (!user) {
-      return res.status(NOT_FOUND_CODE).json({ status: FAIL, message: 'User not found' });
-    }
-
-    return res.json({
-      status: SUCCESS,
-      user,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+  if (!user) {
+    return next(new HttpException(NOT_FOUND_CODE, 'User not found', `getUserById: ${method} request to ${url}`));
   }
-};
 
-export const getAutoSuggest = async (req: Request, res: Response) => {
-  try {
-    const { login, limit } = req.query;
+  return res.json({
+    status: SUCCESS,
+    user,
+  });
+});
 
-    const users = await userService.suggestUsers(login as string, limit as string);
+export const getAutoSuggest = catchAsync(async (req: Request, res: Response) => {
+  const { login, limit } = req.query;
 
-    return res.json({
-      status: SUCCESS,
-      searchString: login,
-      users,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+  const users = await userService.suggestUsers(login as string, limit as string);
+
+  return res.json({
+    status: SUCCESS,
+    searchString: login,
+    users,
+  });
+});
+
+export const createUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { body, url, method } = req;
+  const userExists = await userService.findUserByLogin(body.login);
+
+  if (userExists) {
+    return next(
+      new HttpException(
+        BAD_REQUEST_CODE,
+        `User with login ${body.login} already exists`,
+        `createUser: ${method} request to ${url}`,
+        req.body
+      )
+    );
   }
-};
 
-export const createUser = async (req: Request, res: Response) => {
-  try {
-    const userExists = await userService.findUserByLogin(req.body.login);
+  const { error } = userSchema.validate(body);
 
-    if (userExists) {
-      return res
-        .status(BAD_REQUEST_CODE)
-        .json({ status: FAIL, message: `User with login ${req.body.login} already exists` });
-    }
+  if (error) {
+    const errors = error.details.map((err) => err.message);
 
-    const { error } = userSchema.validate(req.body);
-
-    if (error) {
-      const errors = error.details.map((err) => err.message);
-
-      return res.status(BAD_REQUEST_CODE).json({ status: FAIL, message: errors });
-    }
-
-    const user = await userService.createUser(req.body);
-
-    return res.json({
-      status: SUCCESS,
-      user,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+    return next(new HttpException(BAD_REQUEST_CODE, `${errors}`, `createUser: ${method} request to ${url}`, body));
   }
-};
 
-export const updateUser = async (req: Request, res: Response) => {
-  try {
-    const userExists = await userService.findUserById(req.params.id);
+  const user = await userService.createUser(body);
 
-    if (!userExists) {
-      return res.status(NOT_FOUND_CODE).json({ status: FAIL, message: 'User not found' });
-    }
+  return res.json({
+    status: SUCCESS,
+    user,
+  });
+});
 
-    const { error } = userSchema.validate(req.body);
+export const updateUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { params, url, body, method } = req;
+  const userExists = await userService.findUserById(params.id);
 
-    if (error) {
-      const errors = error.details.map((err) => err.message);
-
-      return res.status(BAD_REQUEST_CODE).json({ status: FAIL, message: errors });
-    }
-
-    const user = await userService.updateUser(req.body, req.params.id);
-
-    return res.json({
-      status: SUCCESS,
-      user,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+  if (!userExists) {
+    return next(new HttpException(NOT_FOUND_CODE, 'User not found', `updateUser: ${method} request to ${url}`, body));
   }
-};
 
-export const deleteUser = async (req: Request, res: Response) => {
-  try {
-    await userService.deleteUser(req.params.id);
+  const { error } = userSchema.validate(body);
 
-    return res.status(NO_CONTENT_CODE).json({
-      status: SUCCESS,
-      user: null,
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
+  if (error) {
+    const errors = error.details.map((err) => err.message);
+
+    return next(new HttpException(BAD_REQUEST_CODE, `${errors}`, `updateUser: ${method} request to ${url}`, body));
   }
-};
 
-export const addUsersToGroup = async (req: Request, res: Response) => {
-  try {
-    const { groupId, userIds } = req.body;
+  const user = await userService.updateUser(body, params.id);
 
-    await userService.addUsersToGroup(groupId, userIds);
+  return res.json({
+    status: SUCCESS,
+    user,
+  });
+});
 
-    return res.json({
-      status: SUCCESS,
-      message: 'Users where added to group successfully',
-    });
-  } catch (err) {
-    return res.status(BAD_REQUEST_CODE).json({
-      status: FAIL,
-      message: err,
-    });
-  }
-};
+export const deleteUser = catchAsync(async (req: Request, res: Response) => {
+  await userService.deleteUser(req.params.id);
+
+  return res.status(NO_CONTENT_CODE).json({
+    status: SUCCESS,
+    user: null,
+  });
+});
+
+export const addUsersToGroup = catchAsync(async (req: Request, res: Response) => {
+  const { groupId, userIds } = req.body;
+
+  await userService.addUsersToGroup(groupId, userIds);
+
+  return res.json({
+    status: SUCCESS,
+    message: 'Users where added to group successfully',
+  });
+});
