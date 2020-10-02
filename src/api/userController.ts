@@ -1,9 +1,43 @@
 import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 import { userSchema } from './schema';
-import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, SUCCESS } from '../constants';
+import { NO_CONTENT_CODE, NOT_FOUND_CODE, BAD_REQUEST_CODE, UNAUTHORIZED_CODE, SUCCESS } from '../constants';
 import userService from '../services/userService';
 import { HttpException, catchAsync } from '../utils';
+
+const JWT_SECRET = 'secret';
+const EXPIRES_IN = '90d';
+
+const signUser = (id: string) => jwt.sign({ id }, JWT_SECRET, { expiresIn: EXPIRES_IN });
+
+export const loginUser = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+  const { method, url, body } = req;
+  const { login, password } = body;
+
+  const methodName = `loginUser: ${method} request to ${url}`;
+
+  if (!login || !password) {
+    const errorMessage = 'Please provide login and password';
+
+    return next(new HttpException(BAD_REQUEST_CODE, errorMessage, methodName, body));
+  }
+
+  const user = await userService.findUserByLogin(login);
+
+  if (!user || user.password !== password) {
+    const errorMessage = 'Incorrect login or password';
+
+    return next(new HttpException(UNAUTHORIZED_CODE, errorMessage, methodName, body));
+  }
+
+  const token = signUser(user.id);
+
+  return res.json({
+    status: SUCCESS,
+    token,
+  });
+});
 
 export const getUserById = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
   const { params, url, method } = req;
@@ -56,8 +90,11 @@ export const createUser = catchAsync(async (req: Request, res: Response, next: N
 
   const user = await userService.createUser(body);
 
+  const token = signUser(user.id);
+
   return res.json({
     status: SUCCESS,
+    token,
     user,
   });
 });

@@ -4,7 +4,15 @@ import { errorMiddleware, loggerMiddleware } from './middleware';
 import { HttpException, logger } from './utils';
 import { NOT_FOUND_CODE } from './constants';
 
-import { createUser, getUserById, getAutoSuggest, updateUser, deleteUser, addUsersToGroup } from './api/userController';
+import {
+  createUser,
+  getUserById,
+  getAutoSuggest,
+  updateUser,
+  deleteUser,
+  addUsersToGroup,
+  loginUser,
+} from './api/userController';
 import { getAllGroups, createGroup, getGroupById, updateGroup, deleteGroup } from './api/groupController';
 
 import './database/connection';
@@ -21,6 +29,7 @@ app.use(express.json());
 app.use(loggerMiddleware);
 
 // users routes
+app.route('/login').post(loginUser);
 app.route('/users').get(getAutoSuggest).post(createUser);
 app.route('/users/:id').get(getUserById).put(updateUser).delete(deleteUser);
 app.route('/users/addGroup').post(addUsersToGroup);
